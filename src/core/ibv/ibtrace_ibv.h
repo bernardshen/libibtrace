@@ -24,10 +24,17 @@
 #define PRE_TRACE(func_name) \
         double tm_start;     \
         tm_start = ibtrace_timestamp();
+#define POST_TRACE(func_name) \
+	ibtrace_update(IBTRACE_MODULE_IBV, TBL_CALL_NUMBER(func_name), \
+            ibtrace_timestamp_diff(tm_start));
 #define POST_RET_TRACE(func_name) \
         ibtrace_update(IBTRACE_MODULE_IBV, TBL_CALL_NUMBER(func_name),  \
                 ibtrace_timestamp_diff(tm_start));                      \
         printf("%s invoked\n", #func_name);
+
+#define PRE_(func_name) f = ibv_module_context.mean.func_name;
+#define POST_(func_name)
+#define POST_RET_(func_name)
 
 #define FUNC_BODY_RESOLVE_IBV(func_name, ex_name, ctx)                  \
         struct ibv_ctx_t *cur_ibv_ctx = FUNC_BODY_RESOLVE_GET_CTX(ctx); \
@@ -76,6 +83,9 @@
         offsetof(struct ibv_module_api_t, func_name) / sizeof(void*)
 #define TBL_CALL_ENTRY(func_name) \
         { TBL_CALL_NUMBER(func_name), #func_name, NULL},
+
+static inline void ibv_open_device_handler(struct ibv_context *ret);
+static inline void ibv_close_device_handler(struct ibv_context *context);
 
 #endif
 

@@ -111,4 +111,17 @@ static int INLINE sys_time(struct timeval *tv)
 	return status;
 }
 
+/**
+ * sys_malloc
+ *
+ * @brief
+ *    Allocates memory for new category object and set initial values.
+ *
+ * @param[in]    size           This is a size of memory to allocate.
+ *
+ * @retval pointer to the allocated memory - on success
+ * @retval NULL - on failure
+ ***************************************************************************/
+void *sys_malloc(size_t size);
+
 #endif

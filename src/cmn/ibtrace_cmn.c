@@ -77,3 +77,15 @@ sys_free(void *mem)
 	if (mem)
 		free(mem);
 }
+
+void *
+sys_malloc(size_t size)
+{
+	void *p = NULL;
+
+	p = malloc(size);
+	if (p)
+		sys_memset(p, 0, size);
+
+	return p;
+}
