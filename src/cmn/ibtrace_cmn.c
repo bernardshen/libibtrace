@@ -39,7 +39,7 @@ again:
 			}
 #endif /* __COVERITY__ */
 		}
-		IBPROF_TRACE("Can't resolve %s: %s\n", symname, err);
+		IBTRACE_TRACE("Can't resolve %s: %s\n", symname, err);
 	}
 #else
 #endif
@@ -69,4 +69,11 @@ sys_dlcheck(const char *libname)
 #else
 #endif
     return ret;
+}
+
+void 
+sys_free(void *mem)
+{
+	if (mem)
+		free(mem);
 }

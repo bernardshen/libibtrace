@@ -1,6 +1,10 @@
 #include "ibtrace_api.h"
 #include "ibtrace_cmn.h"
 
+
+// Use to load modules when the lib is loaded
+extern IBTRACE_MODULE_OBJECT ibv_module;
+
 double 
 ibtrace_timestamp(void)
 {
@@ -29,19 +33,15 @@ ibtrace_update(int module, int call, double tm)
     printf("ibtrace_update\n");
 }
 
-
-// Use to load modules when the lib is loaded
-extern IBTRACE_MODULE_OBJECT ibv_module;
-
 FILE *ibtrace_dump_file;
 
 
 void __attribute__((constructor))
 __ibtrace_init(void)
 {
-    IBTRACE_ERROR status = IBTRACE_ERR_NONE;
+    // IBTRACE_ERROR status = IBTRACE_ERR_NONE;
 
-    ibtrace_dump_file = (FILE*)stderr;
+    // ibtrace_dump_file = (FILE*)stderr;
     
     // TODO: initialize ibv_module
     printf("Loading libibtrace\n");

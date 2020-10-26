@@ -2,9 +2,18 @@
 #include "ibtrace_api.h"
 
 #include <infiniband/verbs.h>
-#include <infiniband/arch.h>
 
 #include "ibtrace_ibv.h"
+
+#define DEFAULT_SYMVER      "IBVERBS_1.1"
+
+#define check_dlsym(_func) check_dlsymv(_func, DEFAULT_SYMVER)
+#define check_dlsymv(_func, _ver) \
+        do {                                                            \
+            ibv_module_context.noble._func = sys_dlsym(#_func, _ver);   \
+            if (!ibv_module_context.noble._func)                        \
+                status = IBTRACE_ERR_UNSUPPORTED;                       \
+        } while(0)
 
 struct ibv_ctx_t {
     uintptr_t               addr;
@@ -17,17 +26,17 @@ struct ibv_ctx_t {
         OP(ibv_poll_cq) \
         OP(ibv_post_recv)
 
-static struct module_context_t {
-    struct ibv_module_api_t noble;
-    struct ibv_module_api_t mean;
-    struct ibv_ctx_t *ibv_ctx;
-} ibv_module_context;
-
 OP_ON_MEMBERS_LIST(DECLARE_TYPE)
 
 struct ibv_module_api_t {
     OP_ON_MEMBERS_LIST(DECLEAR_STRUCT_MEMBER)
 };
+
+static struct module_context_t {
+    struct ibv_module_api_t noble;
+    struct ibv_module_api_t mean;
+    struct ibv_ctx_t *ibv_ctx;
+} ibv_module_context;
 
 #define DECLARE_OPTION_STRUCT(TYPE) \
 struct ibv_module_api_t ibv_##TYPE##_funcs = { \
@@ -75,6 +84,7 @@ __ibv_init(IBTRACE_MODULE_OBJECT *mod_obj)
     src_api = &ibv_TRACE_funcs;
 
     memcpy(&ibv_module_context.mean, src_api, sizeof(*src_api));
+    return status;
 }
 
 static IBTRACE_ERROR
