@@ -228,16 +228,35 @@ IBTRACE_MODULE_OBJECT ibv_module = {
 };
 
 void 
-ibtrace_post_ret(char *func_name, ...)
+ibtrace_post_ret(int retval, char *func_name, ...)
 {
     printf("%s incoked\n", func_name);
     // apply instrumentation according to the func_name
     if (strcmp(func_name, "ibv_post_send") == 0) {
         // TODO: Instrument ibv_post_send before return
+        // restore args
+        va_list args;
+        struct ibv_qp *qp;
+        struct ibv_send_wr *wr;
+        struct ibv_send_wr **bad_wr;
+        va_start(args, func_name);
+        qp = va_arg(args, struct ibv_qp *);
+        wr = va_arg(args, struct ibv_send_wr *);
+        bad_wr = va_arg(args, struct ibv_send_wr **);
+        ibtrace_post_ret_ibv_post_send(retval, qp, wr, bad_wr);
     } else if (strcmp(func_name, "ibv_post_recv") == 0) {
-        // TODO: Instrument ibv_post_recv before return
+        // restore args
+        va_list args;
+        struct ibv_qp *qp;
+        struct ibv_recv_wr *wr;
+        struct ibv_recv_wr **bad_wr;
+        va_start(args, func_name);
+        qp = va_arg(args, struct ibv_qp *);
+        wr = va_arg(args, struct ibv_recv_wr *);
+        bad_wr = va_arg(args, struct ibv_recv_wr **);
+        ibtrace_post_ret_ibv_post_recv(retval, qp, wr, bad_wr);
     } else if (strcmp(func_name, "ibv_poll_cq") == 0) {
-        // TODO: Instrument ibv_poll_cq
+        // restore args of ibv_poll_cq
         va_list args;
         struct ibv_cq *cq;
         struct ibv_wc *wc;
@@ -246,19 +265,60 @@ ibtrace_post_ret(char *func_name, ...)
         cq = va_arg(args, struct ibv_cq *);
         ne = va_arg(args, int);
         wc = va_arg(args, struct ibv_wc *);
-        ibtrace_post_ret_ibv_poll_cq(cq, ne, wc);
+        ibtrace_post_ret_ibv_poll_cq(retval, cq, ne, wc);
     }
 
 }
 
-void ibtrace_post_ret_ibv_poll_cq(struct ibv_cq *cq, int ne, struct ibv_wc *wc) {
+void
+ibtrace_post_ret_ibv_post_send(int retval, struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr)
+{
+    // TODO: Add more data to log
+    // getpid
+    long pid = getpid();
+    if (retval != 0) {
+        printlog("pid: %ld, ibv_post_send, qp: %d, error: %d\n", 
+            pid, qp->qp_num, retval);
+    } else {
+        struct ibv_send_wr *wrp;
+        for (wrp = wr; wrp; wrp = wrp->next) {
+            printlog("pid: %ld, ibv_post_send, qp: %d, wr_id: %d. num_sge: %d\n",
+                pid, qp->qp_num, wr->wr_id, wr->num_sge);
+        }
+    }
+}
+
+void
+ibtrace_post_ret_ibv_post_recv(int retval, struct ibv_qp *qp, struct ibv_recv_wr *wr, struct ibv_recv_wr **bad_wr)
+{
+    // TODO: Add more data to log
+    // getpid
+    long pid = getpid();
+    if (retval != 0) {
+        printlog("pid: %ld, ibv_post_recv, qp: %d, error: %d\n", 
+            pid, qp->qp_num, retval);
+    } else {
+        struct ibv_recv_wr *wrp;
+        for (wrp = wr; wrp; wrp = wrp->next) {
+            printlog("pid: %ld, ibv_post_recv, qp: %d, wr_id: %d, num_sge: %d\n", 
+                pid, qp->qp_num, wrp->wr_id, wrp->num_sge);
+        }
+    }
+}
+
+void 
+ibtrace_post_ret_ibv_poll_cq(int retval, struct ibv_cq *cq, int ne, struct ibv_wc *wc) 
+{
+    // TODO: Add more information to log
     if (wc == NULL) {
         return;
     }
     long pid = getpid();
     if (wc->status == IBV_WC_SUCCESS) {
-        printlog("pid: %ld, ibv_poll_cq, wr_id: %ld, src_qp: %ld, opcode: %d\n", pid, wc->wr_id, wc->src_qp, wc->opcode);
+        printlog("pid: %ld, ibv_poll_cq, qp: %d, wr_id: %ld, src_qp: %ld, opcode: %d\n", 
+            pid, wc->qp_num, wc->wr_id, wc->src_qp, wc->opcode);
     } else {
-        printlog("pid: %ld, ibv_poll_cq, status: %d, vender_syndrom: %d", wc->status, wc->vendor_err);
+        printlog("pid: %ld, ibv_poll_cq, qp: %d, status: %d, vender_syndrom: %d\n", 
+            pid, wc->qp_num, wc->status, wc->vendor_err);
     }
 }
