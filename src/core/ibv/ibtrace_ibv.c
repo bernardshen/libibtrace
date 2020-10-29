@@ -281,8 +281,17 @@ ibtrace_post_ret_ibv_post_send(int retval, struct ibv_qp *qp, struct ibv_send_wr
     } else {
         struct ibv_send_wr *wrp;
         for (wrp = wr; wrp; wrp = wrp->next) {
-            printlog("pid: %ld, ibv_post_send, qp: %d, wr_id: %d. num_sge: %d\n",
-                pid, qp->qp_num, wr->wr_id, wr->num_sge);
+            int opcode = wr->opcode;
+            if (opcode == IBV_WR_SEND) {
+                printlog("pid: %ld, ibv_post_send, qp: %d, wr_id: %d, num_sge: %d, opcode: %d\n",
+                    pid, qp->qp_num, wr->wr_id, wr->num_sge, wr->opcode);
+            } else if (opcode == IBV_WR_RDMA_READ) {
+                printlog("pid: %ld, ibv_post_send, qp: %d, wr_id: %d, num_sge: %d, opcode: %d, read: 0x%lx\n",
+                    pid, qp->qp_num, wr->wr_id, wr->num_sge, wr->opcode, wr->wr.rdma.remote_addr);
+            } else if (opcode == IBV_WR_RDMA_WRITE) {
+                printlog("pid: %ld, ibv_post_send, qp: %d, wr_id: %d, num_sge: %d, opcode: %d, write: 0x%lx\n",
+                    pid, qp->qp_num, wr->wr_id, wr->num_sge, wr->opcode, wr->wr.rdma.remote_addr);
+            }
         }
     }
 }
