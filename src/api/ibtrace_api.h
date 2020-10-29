@@ -28,15 +28,6 @@ double ibtrace_timestamp(void);
  */
 void ibtrace_dump(void);
 
-/**
- * @brief 
- *      Store time duration per module-call pair.
- * 
- * @param module        Module this mesure is for. 
- * @param call          Call/function this mesure is for.
- * @param tm            Timevalue.
- */
-void ibtrace_update(int module, int call, double tm);
 
 
 #endif

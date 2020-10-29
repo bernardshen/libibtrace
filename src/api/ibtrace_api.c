@@ -27,13 +27,6 @@ ibtrace_dump(void)
     printf("libibtrace exits\n");
 }
 
-void
-ibtrace_update(int module, int call, double tm)
-{
-    // TODO: complete this
-    printf("ibtrace_update\n");
-}
-
 FILE *ibtrace_dump_file;
 
 

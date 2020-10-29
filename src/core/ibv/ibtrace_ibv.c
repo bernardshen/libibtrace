@@ -233,7 +233,6 @@ ibtrace_post_ret(int retval, char *func_name, ...)
     printf("%s incoked\n", func_name);
     // apply instrumentation according to the func_name
     if (strcmp(func_name, "ibv_post_send") == 0) {
-        // TODO: Instrument ibv_post_send before return
         // restore args
         va_list args;
         struct ibv_qp *qp;
@@ -309,7 +308,7 @@ ibtrace_post_ret_ibv_post_recv(int retval, struct ibv_qp *qp, struct ibv_recv_wr
 void 
 ibtrace_post_ret_ibv_poll_cq(int retval, struct ibv_cq *cq, int ne, struct ibv_wc *wc) 
 {
-    // TODO: Add more information to log
+    // TODO: Add more data to log
     if (wc == NULL) {
         return;
     }
