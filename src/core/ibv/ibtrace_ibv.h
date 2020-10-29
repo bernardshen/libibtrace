@@ -22,15 +22,13 @@
 
 // TODO: modify these two macros to support for trace
 #define PRE_TRACE(func_name) \
-        double tm_start;     \
-        tm_start = ibtrace_timestamp();
+        printf("Entering %s\n", #func_name);
 #define POST_TRACE(func_name) \
-	ibtrace_update(IBTRACE_MODULE_IBV, TBL_CALL_NUMBER(func_name), \
-            ibtrace_timestamp_diff(tm_start));
+	printf("Exiting %s\n", #func_name);
 #define POST_RET_TRACE(func_name) \
-        ibtrace_update(IBTRACE_MODULE_IBV, TBL_CALL_NUMBER(func_name),  \
-                ibtrace_timestamp_diff(tm_start));                      \
-        printf("%s invoked\n", #func_name);
+        printf("hhhh\n");
+#define POST_RET_TRACE_N(func_name, ...) \
+        ibtrace_post_ret(#func_name, __VA_ARGS__);
 
 #define PRE_(func_name) f = ibv_module_context.mean.func_name;
 #define POST_(func_name)
@@ -49,7 +47,7 @@
         PRE_##type(func_name)                                       \
         INTERNAL_CHECK();                                           \
         ret = f(__VA_ARGS__);                                       \
-        POST_RET_##type(func_name)                                  \
+        POST_RET_##type##_N(func_name, __VA_ARGS__)                     \
         PRETEND_USED(flip_ret);                                     \
         return ret;
 
@@ -86,6 +84,12 @@
 
 static inline void ibv_open_device_handler(struct ibv_context *ret);
 static inline void ibv_close_device_handler(struct ibv_context *context);
+
+void ibtrace_post_ret(char *func_name, ...);
+
+void ibtrace_post_ret_ibv_poll_cq(struct ibv_cq *cq, int num_entries, struct ibv_wc *wc);
+void ibtrace_post_ret_ibv_post_send(struct ibv_qp *qp, struct ibv_send_wr *wr, struct ibv_send_wr **bad_wr);
+void ibtrace_post_ret_ibv_post_recv(struct ibv_qp *qp, struct ibv_recv_wr *wr, struct ibv_recv_wr **bad_wr);
 
 #endif
 

@@ -4,6 +4,7 @@
 #include <infiniband/verbs.h>
 
 #include "ibtrace_ibv.h"
+#include "ibtrace_logger.h"
 
 #define DEFAULT_SYMVER      "IBVERBS_1.1"
 
@@ -49,7 +50,6 @@ struct ibv_module_api_t ibv_##TYPE##_funcs = { \
 	OP_ON_MEMBERS_LIST(PREFIX##_##TYPE) \
 };
 
-// TODO: Fix this compilation error
 #define DECLARE_OPTION_FUNCTIONS_PROTOTYPED(TYPE) \
         struct ibv_context* TYPE ## ibv_open_device(struct ibv_device *device) \
         { \
@@ -76,7 +76,7 @@ struct ibv_module_api_t ibv_##TYPE##_funcs = { \
             POST_##TYPE(ibv_close_device)           \
             PRETEND_USED(flip_ret);                 \
             return ret;                             \
-        }; 
+        };
 
 #define DECLARE_OPTION_FUNCTIONS_INLINE(TYPE) \
         int TYPE ## ibv_poll_cq(struct ibv_cq *cq, int ne, struct ibv_wc *wc) \
@@ -108,6 +108,7 @@ static inline void ibv_open_device_handler(struct ibv_context *ret)
 	if (ret)  {
 		struct ibv_ctx_t *cur_ibv_ctx = ibv_module_context.ibv_ctx;
 		struct ibv_ctx_t *new_ibv_ctx = NULL;
+        printf("libibtrace ibv_open_device\n");
 
 		/* This protection is in place because this function is called
 		* twice: one with the prefix and suffix of choice (e.g. profiling)
@@ -188,6 +189,8 @@ __ibv_init(IBTRACE_MODULE_OBJECT *mod_obj)
     check_dlsym(ibv_post_send);
     check_dlsym(ibv_post_recv);
     check_dlsym(ibv_poll_cq);
+    check_dlsym(ibv_open_device);
+    check_dlsym(ibv_close_device);
 
     ibv_module_context.ibv_ctx = NULL;
 
@@ -223,3 +226,39 @@ IBTRACE_MODULE_OBJECT ibv_module = {
     __ibv_exit,
     (void *)&ibv_module_context
 };
+
+void 
+ibtrace_post_ret(char *func_name, ...)
+{
+    printf("%s incoked\n", func_name);
+    // apply instrumentation according to the func_name
+    if (strcmp(func_name, "ibv_post_send") == 0) {
+        // TODO: Instrument ibv_post_send before return
+    } else if (strcmp(func_name, "ibv_post_recv") == 0) {
+        // TODO: Instrument ibv_post_recv before return
+    } else if (strcmp(func_name, "ibv_poll_cq") == 0) {
+        // TODO: Instrument ibv_poll_cq
+        va_list args;
+        struct ibv_cq *cq;
+        struct ibv_wc *wc;
+        int ne;
+        va_start(args, func_name);
+        cq = va_arg(args, struct ibv_cq *);
+        ne = va_arg(args, int);
+        wc = va_arg(args, struct ibv_wc *);
+        ibtrace_post_ret_ibv_poll_cq(cq, ne, wc);
+    }
+
+}
+
+void ibtrace_post_ret_ibv_poll_cq(struct ibv_cq *cq, int ne, struct ibv_wc *wc) {
+    if (wc == NULL) {
+        return;
+    }
+    long pid = getpid();
+    if (wc->status == IBV_WC_SUCCESS) {
+        printlog("pid: %ld, ibv_poll_cq, wr_id: %ld, src_qp: %ld, opcode: %d\n", pid, wc->wr_id, wc->src_qp, wc->opcode);
+    } else {
+        printlog("pid: %ld, ibv_poll_cq, status: %d, vender_syndrom: %d", wc->status, wc->vendor_err);
+    }
+}

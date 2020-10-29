@@ -1,5 +1,6 @@
 #include "ibtrace_api.h"
 #include "ibtrace_cmn.h"
+#include "ibtrace_logger.h"
 
 
 // Use to load modules when the lib is loaded
@@ -47,6 +48,8 @@ __ibtrace_init(void)
     printf("Loading libibtrace\n");
     printf("Initializing ibv_module\n");
     ibv_module.init(&ibv_module);
+    logger_init();
+
 
     // TODO: intialize other part to trace
 }
